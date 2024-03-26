@@ -6,12 +6,18 @@ import './App.css';
 function App() {
  const [movie, setMovie] = useState([]);
  const [isLoading, setIsLoading] = useState(false);
-
+ const [error, setError] = useState(null)
+ const [retry, setRetry] = useState(false)
 
  async function fetchMovieHandler(){
   setIsLoading(true);
-    const res =  await fetch("https://swapi.dev/api/films/")
-    const data = await res.json();
+  setError(null)
+  try{
+       const res =  await fetch("https://swapi.dev/api/film/")
+      if(!res.ok){
+      throw new Error('Something went wrong ... Retrying')
+    }
+     const data = await res.json();
     const transformedMovies = data.results.map(movieData => {
           return {
             id: movieData.episode_id,
@@ -20,9 +26,28 @@ function App() {
           }
         });
    setMovie(transformedMovies);
+  }catch(error){
+      setError(error.message)
+      setRetry(true)
+  } 
    setIsLoading(false);
       
  }
+ let timeOut = '';
+
+      if(retry){
+     timeOut = setTimeout(() => {
+      fetchMovieHandler();
+    },5000)
+  }
+
+ function handleRetry(){
+  setRetry(false);
+  clearTimeout(timeOut);
+ }
+
+
+ 
 
   return (
     <React.Fragment>
@@ -32,6 +57,7 @@ function App() {
       <section>
         {!isLoading && <MoviesList movies={movie} />}
         {isLoading && <p>Loading....</p>}
+        {!isLoading && error && <div><p>{error}</p> <button onClick={handleRetry}>Cancel</button></div>}
       </section>
     </React.Fragment>
   );
