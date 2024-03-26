@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import MoviesList from './components/MoviesList';
 import './App.css';
@@ -7,13 +7,12 @@ function App() {
  const [movie, setMovie] = useState([]);
  const [isLoading, setIsLoading] = useState(false);
  const [error, setError] = useState(null)
- const [retry, setRetry] = useState(false)
 
- async function fetchMovieHandler(){
+ const fetchMovieHandler = useCallback(async () => {
   setIsLoading(true);
   setError(null)
   try{
-       const res =  await fetch("https://swapi.dev/api/film/")
+       const res =  await fetch("https://swapi.dev/api/films/")
       if(!res.ok){
       throw new Error('Something went wrong ... Retrying')
     }
@@ -28,23 +27,15 @@ function App() {
    setMovie(transformedMovies);
   }catch(error){
       setError(error.message)
-      setRetry(true)
   } 
    setIsLoading(false);
       
- }
- let timeOut = '';
+ }, [])
 
-      if(retry){
-     timeOut = setTimeout(() => {
-      fetchMovieHandler();
-    },5000)
-  }
+ useEffect(() => {
+       fetchMovieHandler()
+ }, [fetchMovieHandler])
 
- function handleRetry(){
-  setRetry(false);
-  clearTimeout(timeOut);
- }
 
 
  
@@ -57,7 +48,7 @@ function App() {
       <section>
         {!isLoading && <MoviesList movies={movie} />}
         {isLoading && <p>Loading....</p>}
-        {!isLoading && error && <div><p>{error}</p> <button onClick={handleRetry}>Cancel</button></div>}
+        {!isLoading && error && <div><p>{error}</p></div>}
       </section>
     </React.Fragment>
   );
