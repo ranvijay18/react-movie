@@ -13,40 +13,60 @@ function App() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch('https://swapi.dev/api/films/');
+      const response = await fetch('https://react-movie-8cf32-default-rtdb.firebaseio.com/movies.json');
       if (!response.ok) {
         throw new Error('Something went wrong!');
       }
 
       const data = await response.json();
-
-      const transformedMovies = data.results.map((movieData) => {
-        return {
-          id: movieData.episode_id,
-          title: movieData.title,
-          openingText: movieData.opening_crawl,
-          releaseDate: movieData.release_date,
-        };
-      });
-      setMovies(transformedMovies);
+      console.log(data)
+      let loadedData = []
+       
+      for( let key in data){
+        loadedData.push({
+          id:key,
+          title: data[key].title,
+          openingText: data[key].openingText,
+          releaseDate: data[key].releaseDate
+        })
+      }
+     
+      setMovies(loadedData);
     } catch (error) {
       setError(error.message);
     }
     setIsLoading(false);
   }, []);
 
+ async function addMovieHandler(movie) {
+    const res = fetch("https://react-movie-8cf32-default-rtdb.firebaseio.com/movies.json",{
+      method: "POST",
+      body: JSON.stringify(movie),
+      headers: {
+        'Content-Type' : 'application/json'
+      }
+    });
+
+  }
+
+  const handleDelete = useCallback ((id) => {
+    console.log(id);
+       const res = fetch(`https://react-movie-8cf32-default-rtdb.firebaseio.com/movies/${id}.json()`, {
+        method:"DELETE",
+        headers: {
+          'Content-Type': 'application/json',
+        }
+       })
+  },[])
+
   useEffect(() => {
     fetchMoviesHandler();
-  }, [fetchMoviesHandler]);
-
-  function addMovieHandler(movie) {
-    console.log(movie);
-  }
+  }, [fetchMoviesHandler, handleDelete]);
 
   let content = <p>Found no movies.</p>;
 
   if (movies.length > 0) {
-    content = <MoviesList movies={movies} />;
+    content = <MoviesList movies={movies} onDelete={handleDelete}/>;
   }
 
   if (error) {
